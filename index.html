@@ -4,46 +4,104 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>😈</title>
+
   <style>
     html, body { height:100%; margin:0; background:#000; overflow:hidden; }
-    video {
+
+    /* Video stays hidden until we start */
+    #v {
       width:100vw; height:100vh;
-      object-fit: cover;
+      object-fit:cover;
       background:#000;
+      display:none;
     }
-    /* Big shout text (appears briefly) */
-    #shout {
-      position: fixed; inset: 0;
-      display: none;
-      place-items: center;
-      text-align: center;
-      padding: 24px;
-      color: #fff;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      font-weight: 950;
-      font-size: clamp(26px, 5vw, 64px);
-      text-shadow: 0 14px 48px rgba(0,0,0,.8);
-      pointer-events: none;
+
+    /* Simple overlay with button */
+    #overlay{
+      position:fixed; inset:0;
+      display:grid; place-items:center;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:#e8eef6;
+      background: rgba(0,0,0,.65);
+      z-index:5;
+    }
+    .card{
+      width:min(520px, 92vw);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      padding:18px;
+      background:rgba(0,0,0,.40);
+      box-shadow:0 18px 60px rgba(0,0,0,.65);
+      backdrop-filter: blur(10px);
+      text-align:center;
+    }
+    .btn{
+      cursor:pointer;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.10);
+      color:#e8eef6;
+      padding:12px 16px;
+      font-size:14px;
+      font-weight:900;
+      user-select:none;
+      display:inline-block;
+      margin-top:10px;
+    }
+    .btn:hover{ background:rgba(255,255,255,.14); }
+
+    /* Shout overlay (appears before video starts) */
+    #shout{
+      position:fixed; inset:0;
+      display:none;
+      place-items:center;
+      text-align:center;
+      padding:24px;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:#fff;
+      font-weight:950;
+      font-size:clamp(26px, 5vw, 64px);
+      text-shadow:0 14px 48px rgba(0,0,0,.85);
+      pointer-events:none;
+      z-index:10;
+    }
+    #shout .txt{
+      transform: rotate(-2deg);
+      animation: pop .55s ease-out both;
+    }
+    @keyframes pop{
+      from{ transform: scale(.84) rotate(-2deg); opacity:0; }
+      to{ transform: scale(1) rotate(-2deg); opacity:1; }
     }
   </style>
 </head>
-<body>
 
-  <video id="v" autoplay muted playsinline loop preload="auto">
+<body>
+  <video id="v" muted playsinline loop preload="auto">
     <source src="assets/leak.mp4" type="video/mp4">
   </video>
 
-  <div id="shout">YOU’VE BEEN RICKSS ROLLAAAHH!!!</div>
+  <div id="overlay">
+    <div class="card">
+      <div style="font-size:13px; opacity:.8;">📄 Leak_Doc_of_D</div>
+      <div style="font-size:18px; font-weight:950; margin-top:6px;">Ready?</div>
+      <div style="font-size:13px; opacity:.72; margin-top:6px;">Click to view the content.</div>
+      <div class="btn" id="goBtn">Check thizz out! 😈</div>
+    </div>
+  </div>
+
+  <div id="shout"><div class="txt">YOU’VE BEEN RICKSS ROLLAAAHH!!!</div></div>
 
   <script>
     const v = document.getElementById('v');
+    const overlay = document.getElementById('overlay');
+    const goBtn = document.getElementById('goBtn');
     const shout = document.getElementById('shout');
 
-    // Nudge autoplay (muted) in case browser is picky
-    v.play().catch(() => {});
+    const SHOUT_MS = 750; // <-- how long the text shows before video starts
 
     function speak() {
-      // Text-to-speech often works only after user interaction (we call it on click)
+      // TTS usually works on user gesture (we call it right after click)
       try {
         const msg = new SpeechSynthesisUtterance("You've been Rickss Rollaaahh!!!");
         msg.rate = 1.0;
@@ -54,30 +112,45 @@
       } catch (_) {}
     }
 
-    function popText() {
-      shout.style.display = 'grid';
-      setTimeout(() => shout.style.display = 'none', 1500);
-    }
-
-    function unmuteAndGo() {
-      // Unmute + play with user gesture (most reliable way to get sound)
-      v.muted = false;
-      v.volume = 1.0;
-      v.play().catch(() => {});
-      popText();
-      speak();
-
-      // Try fullscreen (optional; may fail on some browsers)
+    async function tryFullscreen() {
+      // Fullscreen requires user gesture; may fail on some mobile browsers.
       try {
-        if (v.requestFullscreen) v.requestFullscreen();
-        else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen(); // iOS Safari (sometimes)
+        if (v.requestFullscreen) await v.requestFullscreen();
+        else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen(); // iOS Safari sometimes
       } catch (_) {}
     }
 
-    // First user interaction enables sound + shout
-    document.addEventListener('click', unmuteAndGo, { once: true });
-    document.addEventListener('touchstart', unmuteAndGo, { once: true });
-  </script>
+    async function startVideo() {
+      // Hide overlay, show video
+      overlay.style.display = 'none';
+      v.style.display = 'block';
 
+      // If you want sound immediately after click:
+      v.muted = false;
+      v.volume = 1.0;
+
+      try { await v.play(); } catch (_) {}
+
+      // Optional fullscreen attempt
+      tryFullscreen();
+    }
+
+    function startSequence() {
+      // Show shout FIRST
+      shout.style.display = 'grid';
+      speak();
+
+      // After a short beat, start video
+      setTimeout(() => {
+        shout.style.display = 'none';
+        startVideo();
+      }, SHOUT_MS);
+    }
+
+    goBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startSequence();
+    });
+  </script>
 </body>
 </html>
