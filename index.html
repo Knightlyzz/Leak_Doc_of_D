@@ -3,172 +3,47 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Leak Doc Viewer</title>
-
+  <title>😈</title>
   <style>
     html, body { height:100%; margin:0; background:#000; overflow:hidden; }
-    #v {
+    video {
       width:100vw; height:100vh;
-      object-fit:cover;
+      object-fit: cover;
       background:#000;
     }
-
-    /* Bait overlay */
-    #overlay{
-      position:fixed; inset:0;
-      display:grid; place-items:center;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      color:#e8eef6;
-      background:
-        radial-gradient(1200px 700px at 50% 0%, rgba(59,130,246,.20), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.04), transparent 35%),
-        rgba(0,0,0,.22);
-      z-index:5;
-    }
-    .card{
-      width:min(720px, 92vw);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:18px;
-      padding:18px;
-      background:rgba(0,0,0,.46);
-      box-shadow:0 18px 60px rgba(0,0,0,.62);
-      backdrop-filter: blur(10px);
-    }
-    .row{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-    .badge{
-      font-size:12px; opacity:.92;
-      border:1px solid rgba(255,255,255,.12);
-      padding:6px 10px; border-radius:999px;
-      background:rgba(255,255,255,.06);
-    }
-    h1{ margin:12px 0 6px; font-size:18px; font-weight:700; letter-spacing:.2px; }
-    p{ margin:0 0 14px; font-size:13px; opacity:.78; }
-
-    .barWrap{ height:10px; border-radius:999px; background:rgba(255,255,255,.12); overflow:hidden; }
-    .bar{
-      height:100%; width:0%;
-      background: linear-gradient(90deg, #3b82f6, #60a5fa);
-      transition: width .25s ease;
-      border-radius:999px;
-    }
-
-    .btn{
-      cursor:pointer;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.08);
-      color:#e8eef6;
-      padding:12px 14px;
-      font-size:13px;
-      user-select:none;
-      font-weight:700;
-    }
-    .btn:hover{ background:rgba(255,255,255,.12); }
-
-    /* Big shout text */
-    #shout{
-      position:fixed; inset:0;
-      display:none;
-      place-items:center;
-      text-align:center;
-      padding:24px;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      color:#fff;
-      text-shadow:0 14px 48px rgba(0,0,0,.78);
-      pointer-events:none;
-      z-index:10;
-    }
-    #shout .txt{
-      font-size:clamp(26px, 5vw, 64px);
-      font-weight:950;
-      letter-spacing:.6px;
-      transform: rotate(-2deg);
-      animation: pop .55s ease-out both;
-    }
-    @keyframes pop{
-      from{ transform: scale(.84) rotate(-2deg); opacity:0; }
-      to{ transform: scale(1) rotate(-2deg); opacity:1; }
-    }
-
-    /* Tiny bottom hint */
-    #hint{
-      position:fixed;
-      left:50%; transform:translateX(-50%);
-      bottom:18px;
-      padding:10px 14px;
-      border-radius:999px;
-      background:rgba(0,0,0,.58);
-      border:1px solid rgba(255,255,255,.12);
-      color:rgba(255,255,255,.92);
-      font: 13px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      display:none;
-      z-index:6;
+    /* Big shout text (appears briefly) */
+    #shout {
+      position: fixed; inset: 0;
+      display: none;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      color: #fff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      font-weight: 950;
+      font-size: clamp(26px, 5vw, 64px);
+      text-shadow: 0 14px 48px rgba(0,0,0,.8);
+      pointer-events: none;
     }
   </style>
 </head>
-
 <body>
-  <!-- Self-hosted autoplay (muted) video -->
+
   <video id="v" autoplay muted playsinline loop preload="auto">
     <source src="assets/leak.mp4" type="video/mp4">
   </video>
 
-  <!-- Bait overlay -->
-  <div id="overlay">
-    <div class="card">
-      <div class="row">
-        <div class="badge">🔒 Secure Viewer</div>
-        <div class="badge">📄 Leak_Doc_of_D</div>
-      </div>
-
-      <h1>Decrypting document…</h1>
-      <p>Rendering pages, verifying integrity, and loading embedded media.</p>
-
-      <div class="barWrap"><div class="bar" id="bar"></div></div>
-
-      <div class="row" style="margin-top:14px;">
-        <div class="btn" id="goBtn">Check thizz out! 😈</div>
-      </div>
-
-      <p style="margin-top:10px; opacity:.62;">Tap to continue.</p>
-    </div>
-  </div>
-
-  <!-- Shout overlay -->
-  <div id="shout"><div class="txt">YOU’VE BEEN RICKSS ROLLAAAHH!!!</div></div>
-
-  <div id="hint">Tap anywhere 😈</div>
+  <div id="shout">YOU’VE BEEN RICKSS ROLLAAAHH!!!</div>
 
   <script>
     const v = document.getElementById('v');
-    const overlay = document.getElementById('overlay');
     const shout = document.getElementById('shout');
-    const bar = document.getElementById('bar');
-    const hint = document.getElementById('hint');
-    const goBtn = document.getElementById('goBtn');
 
-    // Fake progress bar for bait
-    let p = 0;
-    const t = setInterval(() => {
-      p = Math.min(100, p + (p < 75 ? 14 : p < 92 ? 5 : 1));
-      bar.style.width = p + '%';
-      if (p >= 100) clearInterval(t);
-    }, 220);
-
-    // Try to start autoplay (muted) ASAP
+    // Nudge autoplay (muted) in case browser is picky
     v.play().catch(() => {});
 
-    // Small hint
-    setTimeout(() => hint.style.display = 'block', 900);
-    setTimeout(() => hint.style.display = 'none', 4500);
-
-    function showShout() {
-      shout.style.display = 'grid';
-      setTimeout(() => shout.style.display = 'none', 1700);
-    }
-
-    function speakShout() {
-      // TTS usually requires user gesture — we're calling it on click, so it should work often.
+    function speak() {
+      // Text-to-speech often works only after user interaction (we call it on click)
       try {
         const msg = new SpeechSynthesisUtterance("You've been Rickss Rollaaahh!!!");
         msg.rate = 1.0;
@@ -179,44 +54,30 @@
       } catch (_) {}
     }
 
-    async function tryFullscreen() {
-      // Fullscreen only works on user gesture; may fail on iOS depending on version.
+    function popText() {
+      shout.style.display = 'grid';
+      setTimeout(() => shout.style.display = 'none', 1500);
+    }
+
+    function unmuteAndGo() {
+      // Unmute + play with user gesture (most reliable way to get sound)
+      v.muted = false;
+      v.volume = 1.0;
+      v.play().catch(() => {});
+      popText();
+      speak();
+
+      // Try fullscreen (optional; may fail on some browsers)
       try {
-        if (v.requestFullscreen) await v.requestFullscreen();
+        if (v.requestFullscreen) v.requestFullscreen();
         else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen(); // iOS Safari (sometimes)
       } catch (_) {}
     }
 
-    function unleash() {
-      overlay.style.display = 'none';
-
-      // Unmute + play (user gesture makes this legit)
-      v.muted = false;
-      v.volume = 1.0;
-      v.play().catch(() => {});
-
-      showShout();
-      speakShout();
-      tryFullscreen();
-    }
-
-    // Button click
-    goBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      unleash();
-    });
-
-    // Clicking anywhere on overlay also triggers
-    overlay.addEventListener('click', (e) => {
-      if (e.target.closest('#goBtn')) return;
-      unleash();
-    });
-
-    // Optional: if they miss the button and click elsewhere later
-    document.addEventListener('click', () => {
-      if (overlay.style.display !== 'none') return;
-      // nothing; keep it clean
-    });
+    // First user interaction enables sound + shout
+    document.addEventListener('click', unmuteAndGo, { once: true });
+    document.addEventListener('touchstart', unmuteAndGo, { once: true });
   </script>
+
 </body>
 </html>
