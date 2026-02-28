@@ -1,10 +1,197 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-    <meta http-equiv="refresh" content="0; url=https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0">
-    <title>Loading Portfolio...</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Leak Doc Viewer</title>
+
+  <style>
+    :root { --bg:#0b0f14; --fg:#e8eef6; --muted:#9fb0c3; --bar:#3b82f6; }
+    html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; overflow: hidden; }
+
+    /* Fullscreen iframe */
+    #ytWrap { position: fixed; inset: 0; background:#000; display:none; }
+    iframe { width: 100vw; height: 100vh; border: 0; }
+
+    /* Bait overlay */
+    .overlay {
+      position: fixed; inset: 0;
+      display: grid; place-items: center;
+      padding: 24px;
+      background: radial-gradient(1200px 600px at 50% 0%, rgba(59,130,246,.22), transparent 60%),
+                  linear-gradient(180deg, rgba(255,255,255,.03), transparent 35%);
+    }
+    .card {
+      width: min(680px, 92vw);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      background: rgba(255,255,255,.04);
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+    }
+    .top { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .badge {
+      font-size: 12px; color: rgba(255,255,255,.85);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 6px 10px; border-radius: 999px;
+      background: rgba(0,0,0,.25);
+    }
+    h1 { margin: 12px 0 6px; font-size: 18px; font-weight: 650; letter-spacing:.2px; }
+    p { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+
+    .barWrap {
+      height: 10px; border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+    }
+    .bar {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--bar), #60a5fa);
+      transition: width .35s ease;
+    }
+
+    .row { display:flex; gap:10px; margin-top: 14px; flex-wrap: wrap; }
+    .btn {
+      cursor: pointer;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--fg);
+      padding: 10px 12px;
+      font-size: 13px;
+      user-select: none;
+    }
+    .btn.primary {
+      background: rgba(59,130,246,.18);
+      border-color: rgba(59,130,246,.45);
+    }
+    .fineprint {
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,.65);
+    }
+
+    /* Small floating sound prompt */
+    #soundToast {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 18px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.9);
+      font-size: 13px;
+      display: none;
+    }
+  </style>
 </head>
+
 <body>
-    <p>Redirecting to secure site...</p>
+  <!-- BAIT -->
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="top">
+        <div class="badge">🔒 Secure Viewer</div>
+        <div class="badge">📄 Leak_Doc_of_D</div>
+      </div>
+
+      <h1>Decrypting document…</h1>
+      <p>Initializing preview, verifying integrity, and loading embedded media.</p>
+
+      <div class="barWrap"><div class="bar" id="bar"></div></div>
+
+      <div class="row">
+        <div class="btn primary" id="openBtn">Open document</div>
+        <div class="btn" id="altBtn">Try fallback player</div>
+      </div>
+
+      <div class="fineprint">⚠️ If audio is blocked, tap once to enable sound.</div>
+    </div>
+  </div>
+
+  <!-- VIDEO -->
+  <div id="ytWrap">
+    <iframe
+      id="yt"
+      src=""
+      title="Document Media"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  </div>
+
+  <div id="soundToast">🔊 Tap anywhere for sound</div>
+
+  <script>
+    // Rickroll video id
+    const VID = "dQw4w9WgXcQ";
+
+    // YouTube embed URL: autoplay muted (most reliable), fullscreen-ish, minimal UI
+    const EMBED_MUTED = `https://www.youtube.com/embed/${VID}?autoplay=1&mute=1&controls=0&rel=0&playsinline=1&modestbranding=1`;
+    // "Fallback": open the normal watch page (sometimes autoplays better depending on client)
+    const WATCH_URL = `https://www.youtube.com/watch?v=${VID}`;
+
+    const overlay = document.getElementById("overlay");
+    const ytWrap = document.getElementById("ytWrap");
+    const yt = document.getElementById("yt");
+    const bar = document.getElementById("bar");
+    const soundToast = document.getElementById("soundToast");
+
+    // Fake progress to sell the bait
+    let pct = 0;
+    const timer = setInterval(() => {
+      pct = Math.min(100, pct + (pct < 70 ? 12 : pct < 92 ? 4 : 1));
+      bar.style.width = pct + "%";
+      if (pct >= 100) clearInterval(timer);
+    }, 260);
+
+    // Load the embed quickly (but keep overlay visible for a beat)
+    function startEmbed() {
+      yt.src = EMBED_MUTED;
+      ytWrap.style.display = "block";
+      // Let it begin playing behind the overlay
+      setTimeout(() => {
+        overlay.style.display = "none";
+        soundToast.style.display = "block";
+        // Hide toast after a bit
+        setTimeout(() => soundToast.style.display = "none", 4500);
+      }, 900);
+    }
+
+    // Autostart on page load (max troll)
+    startEmbed();
+
+    // 1-click sound enable attempt:
+    // We can't force unmute inside YouTube iframe reliably, so we do the next best thing:
+    // On any click/tap, open the WATCH page in same tab (sound will be on and user gesture counts).
+    function enableSound() {
+      // If you prefer not to navigate away, remove this and just hide the toast.
+      window.location.href = WATCH_URL;
+    }
+
+    document.addEventListener("click", () => {
+      if (soundToast.style.display !== "none") enableSound();
+    }, { once: true });
+
+    // Buttons
+    document.getElementById("openBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      // hide overlay immediately to reveal the playing embed
+      overlay.style.display = "none";
+      soundToast.style.display = "block";
+      setTimeout(() => soundToast.style.display = "none", 4500);
+    });
+
+    document.getElementById("altBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      window.location.href = WATCH_URL;
+    });
+  </script>
 </body>
 </html>
